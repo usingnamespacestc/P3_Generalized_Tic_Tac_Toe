@@ -1,21 +1,23 @@
-import tkinter as tk
+from tkinter import *
+import asyncio
+import time
 
 
-class App(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.pack()
+async def asyncTest():
+    time.sleep(5)
 
 
-# create the application
-myapp = App()
+def update():
+    print(canvas.master.winfo_width())
+    tk.after(10, update)
 
-#
-# here are method calls to the window manager class
-#
-myapp.master.title("My Do-Nothing Application")
-myapp.master.minsize(200, 200)
-myapp.master.maxsize(1000, 400)
 
-# start the program
-myapp.mainloop()
+if __name__ == "__main__":
+    tk = Tk()
+    canvas = Canvas(tk, width=400, height=400)
+    canvas.master.maxsize(1500, 1500)
+    canvas.master.minsize(200, 200)
+    canvas.pack()
+    # canvas.create_rectangle(10, 10, 50, 50)  # （10,10）为正方形右上角坐标，（50,50）为正方形右下角坐标
+    tk.after(0, update)
+    tk.mainloop()

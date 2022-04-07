@@ -1,7 +1,6 @@
 import requests
 import json
 import os
-import numpy as np
 
 
 def loadSettings():
@@ -59,7 +58,7 @@ class GameController:
             res = response.json()
             self.target = target
             self.boardSize = boardSize
-            self.boardMap = np.zeros([self.boardSize, self.boardSize])
+            self.boardMap = [[None] * self.boardSize for _ in range(self.boardSize)]
             # print("game", res["gameId"], "created")
             return res["gameId"]
         else:
