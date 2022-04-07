@@ -1,0 +1,22 @@
+{
+  "x-api-key": "99f2fb01ab4970a6a3ee",
+  "user":
+  {
+    "name": "kusch",
+    "id": 1104
+  },
+  "teams":
+  [
+    {
+      "name": "MimicTear",
+      "id": 1293
+    },
+    {
+      "name": "Tarnished",
+      "id": 1294
+    }
+  ],
+  "origin": "https://www.notexponential.com/",
+  "uri": "aip2pgaming/api/index.php",
+  "currentGame": 3306
+}
