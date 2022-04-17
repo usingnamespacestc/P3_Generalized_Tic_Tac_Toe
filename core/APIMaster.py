@@ -9,7 +9,7 @@ def loadSettings():
         return settings
 
 
-class GameController:
+class APIMaster:
     def __init__(self):
         settings = loadSettings()
         self.x_api_key = settings["x-api-key"]
@@ -107,7 +107,7 @@ class GameController:
 if __name__ == "__main__":
     if "core" not in os.listdir():
         os.chdir("../")
-    testGame = GameController()
+    testGame = APIMaster()
     # testGame.createGame()
     testGame.getBoardMap()
     # testGame.makeMove(teamId=1293, move=[1, 0])
