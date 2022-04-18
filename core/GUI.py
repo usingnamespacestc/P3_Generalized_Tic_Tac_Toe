@@ -135,5 +135,5 @@ class Board:
 
 
 if __name__ == "__main__":
-    testSize = 25
+    testSize = 16
     gui = Board(boardSize=testSize, boardMap=[random.randint(0, 2) for _ in range(0, testSize * testSize)])

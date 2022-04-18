@@ -100,7 +100,7 @@ class APIMaster:
             pos = key.split(",")
             pos[0] = int(pos[0])
             pos[1] = int(pos[1])
-            (self.boardMap[pos[0]][pos[1]]) = True if output[key] == "O" else False
+            (self.boardMap[pos[1]][pos[0]]) = True if output[key] == "O" else False
         return res.json()["output"]
 
 
