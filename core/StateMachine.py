@@ -4,7 +4,7 @@ author: usingnamespacestc@gmail.com
 version: 1.0
 create: forgotten
 description:
-    A state machine for checking the existence of a shape.
+    A state machine for checking the existence of a pattern.
     也就比字符串找子串方法快一丢丢。为了省一个join操作写了这么多代码实现了个状态机真是亏了。
 """
 

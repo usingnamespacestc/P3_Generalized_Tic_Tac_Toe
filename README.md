@@ -7,3 +7,4 @@
 ## Heuristic
 ## Deeper the search
 ## Zobrist Hash
+## Multicore Processing
