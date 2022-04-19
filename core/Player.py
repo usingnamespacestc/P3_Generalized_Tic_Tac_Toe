@@ -1,15 +1,16 @@
 import math
 from core.StateMachine import StateMachine
+from core.Utils import getAllDirections
 
 
 class Player:
-    def __init__(self, color, boardSize, boardMap, target, testSteps=None):
+    def __init__(self, color, boardSize, boardMap, target, testSteps=None, timeLimit=20):
         self.color = color
         self.started = True
         if self.color == "black":
             self.rivalColor = "white"
-            self.number = 1
-            self.rivalNumber = 2
+            self.number = 1  # symbol of black
+            self.rivalNumber = 2  # symbol of white
             # if continuing an existing game, set the boardMap before initializing players
             if 1 not in boardMap and 2 not in boardMap:
                 self.started = False  # then should place first
@@ -22,14 +23,18 @@ class Player:
         self.target = target
         self.testSteps = testSteps
         self.testCount = 0
-        self.scoreModel = []
-        self.generateScoreModel()
+        self.scoreModels = {"self": [], "rival": []}
+        self.generateScoreModels(player="self")
+        self.generateScoreModels(player="rival")
+        # after this step the patterns will be replaced by their StateMachines
+        self.scoreModelsToStateMachines()
+        self.timeLimit = timeLimit
 
-    def generateScoreModel(self):
+    def generateScoreModels(self, player="self"):
         """
-        Generate a score model to evaluate patterns.
+        Generate a score model to evaluate patterns. Save the model to self scoreModels or rival scoreModels
         example score model(target is 5, I'm black, black is 1 white is 2 and blank is 0):
-        scoreModel = [
+        scoreModels = [
             # [score, [pattern], symmetry]
             # for not symmetry pattern, we have to use match
             # for symmetry pattern, we can use perfectMatch
@@ -68,25 +73,57 @@ class Player:
             # maybe put them into consideration can help reduce the layer of searching
         ]
         """
-        self.scoreModel.append([1, [self.rivalNumber, self.number, 0], False])
+        if player == "self":
+            selfNumber = self.number
+            rivalNumber = self.rivalNumber
+        else:
+            selfNumber = self.rivalNumber
+            rivalNumber = self.number
+
+        self.scoreModels[player].append([1, [rivalNumber, selfNumber, 0], False])
+
         for level in range(1, self.target - 1):
             score = int(math.pow(10, level))
-            pattern1 = [0] + [self.number for _ in range(0, level)] + [0]  # like [0, 1, 1, 1, 1, 1, 0]
-            pattern2 = [self.rivalNumber] + [self.number for _ in range(0, level + 1)] + [0]  # like [2, 1, 1, 1, 1, 0]
-            self.scoreModel.append([score, pattern1, True])
-            self.scoreModel.append([score, pattern2, False])
-        self.scoreModel.append([int(math.pow(10, self.target - 1)),
-                                [0] + [self.number for _ in range(0, self.target - 1)] + [0], True])
-        self.scoreModel.append([int(math.pow(10, self.target)), [self.number for _ in range(0, self.target)], True])
+            pattern1 = [0] + [selfNumber for _ in range(0, level)] + [0]  # like [0, 1, 1, 1, 1, 1, 0]
+            self.scoreModels[player].append([score, pattern1, True])
+            pattern2 = [rivalNumber] + [selfNumber for _ in range(0, level + 1)] + [0]  # like [2, 1, 1, 1, 1, 0]
+            self.scoreModels[player].append([score, pattern2, False])
 
-    def evaluate(self, position):
-        """
-        The total score after setting in this position
-        :param position
-        :return: a score
-        """
+        self.scoreModels[player].append([int(math.pow(10, self.target - 1)),
+                                        [0] + [selfNumber for _ in range(0, self.target - 1)] + [0], True])
+        self.scoreModels[player].append(
+            [int(math.pow(10, self.target)), [selfNumber for _ in range(0, self.target)], True])
 
-        pass
+    def scoreModelsToStateMachines(self):
+        for player in self.scoreModels:
+            for onePattern in self.scoreModels[player]:
+                onePattern[1] = StateMachine(onePattern[1])
+
+    def evaluate(self, boardMap=None, player="self"):
+        """
+        The total score of this status of boardMap
+        :param boardMap: if it has a boardMap input, use that boardMap, or else use self.boardMap
+        :param player: "self" or "rival", which one to evaluate
+        :return: score: score evaluated for this map
+        """
+        if boardMap is None:
+            boardMap = self.boardMap
+        sumScore = 0
+        # calculate score from every line and sum them up
+        allDirections = getAllDirections(boardMap=boardMap, boardSize=self.boardSize)
+        # because those patterns(with no # mark added) doesn't have any coverage between each other
+        # so there's no need to worry about counting score of one position twice
+        for oneDirection in allDirections:
+            for oneLine in oneDirection:
+                for oneRule in self.scoreModels[player]:
+                    # assert isinstance(oneRule[1], StateMachine)
+                    if oneRule[2]:
+                        if oneRule[1].perfectMatch(oneLine):
+                            sumScore += oneRule[0]
+                    else:
+                        if oneRule[1].match(oneLine):
+                            sumScore += oneRule[0]
+        return sumScore
 
     def decide(self):
         # do the test steps first if needed
@@ -108,5 +145,7 @@ class Player:
 
 
 if __name__ == '__main__':
-    testPlayer = Player(color="black", boardSize=3, target=10, boardMap=[0 for _ in range(0, 9)])
+    testBoardSize = 3
+    testPlayer = Player(color="black", boardSize=testBoardSize, target=3,
+                        boardMap=[0 for _ in range(0, testBoardSize * testBoardSize)])
     print("pause")

@@ -5,8 +5,10 @@ import multiprocessing
 import threading
 # import ctypes
 import core.GUI
+import time
 from core.Player import Player
 from core.StateMachine import StateMachine
+from core.Utils import getAllDirections
 
 
 def gameStatus(boardSize=12, boardMap=None, target=6):
@@ -19,28 +21,14 @@ def gameStatus(boardSize=12, boardMap=None, target=6):
     """
     if hasattr(multiprocessing, "sharedctypes"):
         if isinstance(boardMap, multiprocessing.sharedctypes.SynchronizedArray):  # multiprocessing.Array
+            # the above two lines are to eliminate warnings
             if 0 not in boardMap:
                 return "draw"
             for color in range(1, 3):
                 # color 1 black, 2 white
                 referee = StateMachine([color for _ in range(0, target)])
                 # 4 directions
-                allDirections = [
-                    # direction 0 -
-                    [boardMap[i * boardSize:(i + 1) * boardSize] for i in range(0, boardSize)],
-                    # direction 1 |
-                    [[boardMap[i * boardSize + j] for i in range(0, boardSize)] for j in range(0, boardSize)],
-                    # direction 2 \
-                    [[boardMap[i * boardSize + i + boardSize - j]
-                      for i in range(0, j)] for j in range(1, boardSize + 1)] +
-                    [[boardMap[j * boardSize + i * boardSize + i]
-                      for i in range(0, boardSize - j)] for j in range(1, boardSize)],
-                    # direction 3 /
-                    [[boardMap[i * boardSize + j - i - 1] for i in range(0, j)]
-                     for j in range(1, boardSize + 1)] +
-                    [[boardMap[i * boardSize + j * boardSize + boardSize - i - 1] for i in range(0, boardSize - j)]
-                     for j in range(1, boardSize)]
-                ]
+                allDirections = getAllDirections(boardSize=boardSize, boardMap=boardMap)
                 for oneDirection in allDirections:
                     for oneLine in oneDirection:
                         if referee.perfectMatch(oneLine):
@@ -53,7 +41,6 @@ def singleStep(boardSize, boardMap, position: [int, int], color):
     x = position[0]
     y = position[1]
     boardMap[y * boardSize + x] = 1 if color == "black" else 2
-    print(color, "placed at", position)
 
 
 # also works for multiprocessing.sharedctypes.c_long_Array
@@ -93,12 +80,21 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
             white decide
             check game over
         """
+        # TODO: used for adding breakpoints, remember to delete this
+        print("pause")
         while True:
+            # black turn
+            startTime = time.time()
             position = playerBlack.decide()
+            print(int(time.time() - startTime), "seconds used")
             singleStep(boardSize, boardMap, position, "black")
             if gameStatus(boardSize, boardMap, target) != "keep":
                 break
+
+            # white turn
+            startTime = time.time()
             position = playerWhite.decide()
+            print(int(time.time() - startTime), "seconds used")
             singleStep(boardSize, boardMap, position, "white")
             if gameStatus(boardSize, boardMap, target) != "keep":
                 break
@@ -114,6 +110,8 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
                 wait for opponent decide
                 check game over
         """
+
+    return gameStatus(boardSize, boardMap, target)
 
 
 if __name__ == '__main__':

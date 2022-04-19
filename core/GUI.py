@@ -38,7 +38,7 @@ class Board:
         self.createBoard(boardSize=boardSize)
 
     def noClosing(self):
-        realQuit = messagebox.askokcancel("Warning:", "Don't close the window without eliminating the process.\n"
+        realQuit = messagebox.askokcancel("Warning", "Don't close the window without eliminating the main process.\n"
                                           "Are you sure you want to close this window?")
         if realQuit:
             self.tk.destroy()
@@ -46,7 +46,7 @@ class Board:
     def createBoard(self, boardSize=12):
         self.boardSize = boardSize
         self.tk = Tk()
-        self.tk.title("P3_Generalized_Tic_Tac_Toe")
+        self.tk.title("P3_Generalized_Tic_Tac_Toe by usingnamespacestc@gmail.com")
         self.tk.protocol("WM_DELETE_WINDOW", self.noClosing)
         self.canvas = Canvas(self.tk, width=600, height=600)
         self.canvas.pack()
