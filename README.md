@@ -1,7 +1,8 @@
 # P3_Generalized_Tic_Tac_Toe
 ## Requirements
-* Python version must be newer than 3.8.3
-* For macOS, Python version should be 3.10 or later, or else the GUI won't show
+* For Windows, Python must be 3.8.3+
+* For macOS, Python must be 3.10+, or else the GUI won't show
+* Linux not tested
 ## Negative Max
 ## Alpha Beta
 ## Heuristic

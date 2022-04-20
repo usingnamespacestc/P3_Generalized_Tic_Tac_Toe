@@ -1,6 +1,7 @@
 import math
 from core.StateMachine import StateMachine
 from core.Utils import getAllDirections
+import copy
 
 
 class Player:
@@ -28,7 +29,10 @@ class Player:
         self.generateScoreModels(player="rival")
         # after this step the patterns will be replaced by their StateMachines
         self.scoreModelsToStateMachines()
+        self.offsetRange = [_ for _ in range(-self.target, self.target + 1)]
         self.timeLimit = timeLimit
+        self.search_count = 0
+        self.cut_count = 0
 
     def generateScoreModels(self, player="self"):
         """
@@ -68,7 +72,7 @@ class Player:
             [100000, [1, 1, 1, 1, 1], True]
 
             # I haven't put "mark" such as [0, 1, 1, 0, 1, 0] into consideration yet
-            # adding them may cause some unknown problems due to the increasing complexity
+            # adding them may cause some known problems due to the increasing complexity
             # the value of this type is that its potential of becoming a living 4
             # maybe put them into consideration can help reduce the layer of searching
         ]
@@ -125,6 +129,36 @@ class Player:
                             sumScore += oneRule[0]
         return sumScore
 
+    def getAllPossiblePositions(self):
+        def indexExist(index):
+            if index >= self.boardSize or index < 0:
+                return False
+            return True
+        allPossiblePositions = []
+        for i in range(0, self.boardSize):
+            for j in range(0, self.boardSize):
+                isNearby = False
+                if self.boardMap[i * self.boardSize + j] == 0:
+                    for offsetX in self.offsetRange:
+                        for offsetY in self.offsetRange:
+                            if not (offsetX == 0 and offsetY == 0):
+                                x = j + offsetX
+                                y = i + offsetY
+                                if indexExist(x) and indexExist(y):
+                                    if self.boardMap[y * self.boardSize + x] != 0:
+                                        isNearby = True
+                                        break
+                        if isNearby:
+                            break
+                if isNearby:
+                    allPossiblePositions.append([[j, i], -0x3f3f3f3f])  # default score is -inf
+        return allPossiblePositions
+
+    # TODO:
+    # def sortPositions(self, allPossiblePositions, color):
+    #     sortedPositions = copy.deepcopy(allPossiblePositions)
+    #     return sortedPositions
+
     def decide(self):
         # do the test steps first if needed
         if self.testSteps is not None:
@@ -145,7 +179,10 @@ class Player:
 
 
 if __name__ == '__main__':
-    testBoardSize = 3
-    testPlayer = Player(color="black", boardSize=testBoardSize, target=3,
+    testBoardSize = 5
+    testPlayer = Player(color="black", boardSize=testBoardSize, target=2,
                         boardMap=[0 for _ in range(0, testBoardSize * testBoardSize)])
+    testPlayer.boardMap[0] = 1
+    a = testPlayer.getAllPossiblePositions()
+    print(a)
     print("pause")
