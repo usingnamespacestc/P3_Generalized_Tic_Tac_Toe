@@ -81,7 +81,7 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
             check game over
         """
         # TODO: used for adding breakpoints, remember to delete this
-        print("pause")
+        # print("pause")
         while True:
             # black turn
             startTime = time.time()

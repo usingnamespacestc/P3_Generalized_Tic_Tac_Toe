@@ -1,11 +1,13 @@
 import math
 from core.StateMachine import StateMachine
 from core.Utils import getAllDirections
-import copy
+# import copy
+import time
+import config
 
 
 class Player:
-    def __init__(self, color, boardSize, boardMap, target, testSteps=None, timeLimit=20):
+    def __init__(self, color, boardSize, boardMap, target, testSteps=None):
         self.color = color
         self.started = True
         if self.color == "black":
@@ -25,14 +27,16 @@ class Player:
         self.testSteps = testSteps
         self.testCount = 0
         self.scoreModels = {"self": [], "rival": []}
+        self.winScore = math.pow(10, self.target)
         self.generateScoreModels(player="self")
         self.generateScoreModels(player="rival")
         # after this step the patterns will be replaced by their StateMachines
         self.scoreModelsToStateMachines()
         self.offsetRange = [_ for _ in range(-self.target, self.target + 1)]
-        self.timeLimit = timeLimit
-        self.search_count = 0
-        self.cut_count = 0
+        self.startTime = None  # time that starts one round of search
+        self.searchCount = 0
+        self.cutCount = 0
+        self.bestPosition = [0, 0]
 
     def generateScoreModels(self, player="self"):
         """
@@ -94,7 +98,7 @@ class Player:
             self.scoreModels[player].append([score, pattern2, False])
 
         self.scoreModels[player].append([int(math.pow(10, self.target - 1)),
-                                        [0] + [selfNumber for _ in range(0, self.target - 1)] + [0], True])
+                                         [0] + [selfNumber for _ in range(0, self.target - 1)] + [0], True])
         self.scoreModels[player].append(
             [int(math.pow(10, self.target)), [selfNumber for _ in range(0, self.target)], True])
 
@@ -103,7 +107,7 @@ class Player:
             for onePattern in self.scoreModels[player]:
                 onePattern[1] = StateMachine(onePattern[1])
 
-    def evaluate(self, boardMap=None, player="self"):
+    def calculateScore(self, boardMap=None, player="self"):
         """
         The total score of this status of boardMap
         :param boardMap: if it has a boardMap input, use that boardMap, or else use self.boardMap
@@ -112,6 +116,11 @@ class Player:
         """
         if boardMap is None:
             boardMap = self.boardMap
+        # need to take care of the edges, assume the edges are surrounded
+        if player == "self":
+            surround = self.rivalNumber
+        else:
+            surround = self.number
         sumScore = 0
         # calculate score from every line and sum them up
         allDirections = getAllDirections(boardMap=boardMap, boardSize=self.boardSize)
@@ -122,30 +131,57 @@ class Player:
                 for oneRule in self.scoreModels[player]:
                     # assert isinstance(oneRule[1], StateMachine)
                     if oneRule[2]:
-                        if oneRule[1].perfectMatch(oneLine):
+                        if oneRule[1].perfectMatch([surround] + oneLine + [surround]):
                             sumScore += oneRule[0]
                     else:
-                        if oneRule[1].match(oneLine):
+                        if oneRule[1].match([surround] + oneLine + [surround]):
                             sumScore += oneRule[0]
         return sumScore
 
-    def getAllPossiblePositions(self):
+    def placeOne(self, position: [int, int], player: str, boardMap=None):
+        if boardMap is None:
+            boardMap = self.boardMap
+        if player == "self":
+            boardMap[position[1] * self.boardSize + position[0]] = self.number
+        else:
+            boardMap[position[1] * self.boardSize + position[0]] = self.rivalNumber
+
+    def removeOne(self, position: [int, int], boardMap=None):
+        if boardMap is None:
+            boardMap = self.boardMap
+            boardMap[position[1] * self.boardSize + position[0]] = 0
+
+    def evaluate(self, player="self", boardMap=None):
+        if player == "self":
+            active = "self"
+            passive = "rival"
+        else:
+            passive = "self"
+            active = "rival"
+        activeScore = self.calculateScore(boardMap, player=active)
+        passiveScore = self.calculateScore(boardMap, player=passive)
+        return activeScore - passiveScore / config.aggressive
+
+    def getAllPossiblePositions(self, boardMap=None):
         def indexExist(index):
             if index >= self.boardSize or index < 0:
                 return False
             return True
+
+        if boardMap is None:
+            boardMap = self.boardMap
         allPossiblePositions = []
         for i in range(0, self.boardSize):
             for j in range(0, self.boardSize):
                 isNearby = False
-                if self.boardMap[i * self.boardSize + j] == 0:
+                if boardMap[i * self.boardSize + j] == 0:
                     for offsetX in self.offsetRange:
                         for offsetY in self.offsetRange:
                             if not (offsetX == 0 and offsetY == 0):
                                 x = j + offsetX
                                 y = i + offsetY
                                 if indexExist(x) and indexExist(y):
-                                    if self.boardMap[y * self.boardSize + x] != 0:
+                                    if boardMap[y * self.boardSize + x] != 0:
                                         isNearby = True
                                         break
                         if isNearby:
@@ -154,10 +190,57 @@ class Player:
                     allPossiblePositions.append([[j, i], -0x3f3f3f3f])  # default score is -inf
         return allPossiblePositions
 
+    def showMap(self, boardMap=None):
+        if boardMap is None:
+            boardMap = self.boardMap
+        for i in range(0, self.boardSize):
+            row = ""
+            for j in range(0, self.boardSize):
+                row += str(boardMap[i * self.boardSize + j])
+            print(row)
+
     # TODO:
     # def sortPositions(self, allPossiblePositions, color):
     #     sortedPositions = copy.deepcopy(allPossiblePositions)
     #     return sortedPositions
+
+    def negativeMaxRecursive(self, player="self", alpha=-0x3f3f3f3f, beta=0x3f3f3f3f, depth=0, boardMap=None):
+        # preparation
+        if boardMap is None:
+            thisBoardMap = [_ for _ in self.boardMap]
+        else:
+            # already a new one, so the boardMap in the parameter don't need to be deepcopy
+            thisBoardMap = [_ for _ in boardMap]
+        # the score is the last player's score after last action
+        score = self.evaluate(player="rival" if player == "self" else "self", boardMap=thisBoardMap)
+        print("count:", self.searchCount, "score:", score)
+
+        if depth > config.depthLimit or \
+                score >= math.pow(10, self.target) * 0.9 or \
+                time.time() - self.startTime > config.timeLimit:
+            return score
+
+        possiblePositions = self.getAllPossiblePositions(boardMap=thisBoardMap)
+        # it would be better if the positions are sorted
+        for nextPosition in possiblePositions:
+            self.searchCount += 1
+            thatBoardMap = [_ for _ in thisBoardMap]
+            self.placeOne(nextPosition[0], player=player, boardMap=thatBoardMap)
+            # self.showMap(thatBoardMap)
+            # print("")
+            value = self.negativeMaxRecursive(player="rival" if player == "self" else "self", alpha=-beta, beta=-alpha,
+                                              depth=depth + 1, boardMap=thatBoardMap)
+            value *= -1
+            # self.removeOne(nextPosition[0], boardMap=thatBoardMap)
+
+            # alpha-beta
+            if value >= alpha:
+                self.bestPosition[0], self.bestPosition[1] = nextPosition[0][0], nextPosition[0][1]
+                alpha = value
+            # if alpha >= beta:
+            #     self.cutCount += 1
+            #     break
+        return alpha
 
     def decide(self):
         # do the test steps first if needed
@@ -175,14 +258,42 @@ class Player:
         # game already get started
         else:
             print("search starts here")
-            return [0, 0]
+            self.startTime = time.time()
+            self.negativeMaxRecursive()
+
+            self.searchCount = 0
+            self.cutCount = 0
+            return self.bestPosition
 
 
 if __name__ == '__main__':
-    testBoardSize = 5
-    testPlayer = Player(color="black", boardSize=testBoardSize, target=2,
-                        boardMap=[0 for _ in range(0, testBoardSize * testBoardSize)])
-    testPlayer.boardMap[0] = 1
-    a = testPlayer.getAllPossiblePositions()
-    print(a)
+    testBoardSize = 3
+    # initBoardMap = [0 for _ in range(0, testBoardSize * testBoardSize)]
+    """
+    0 2 1
+    1 0 1
+    2 2 0
+    initBoardMap[1] = 2
+    initBoardMap[2] = 1
+    initBoardMap[3] = 1
+    initBoardMap[5] = 1
+    initBoardMap[6] = 2
+    initBoardMap[7] = 2
+    """
+    # initBoardMap = [0, 0, 0, 0, 0,
+    #                 0, 0, 0, 0, 0,
+    #                 0, 0, 2, 0, 0,
+    #                 0, 0, 0, 0, 0,
+    #                 0, 0, 0, 0, 0]
+    # initBoardMap = [0, 0, 0, 0,
+    #                 0, 2, 0, 0,
+    #                 0, 0, 2, 0,
+    #                 0, 0, 0, 0]
+    initBoardMap = [3, 2, 0,
+                    3, 2, 3,
+                    0, 0, 0]
+    testPlayer = Player(color="black", boardSize=testBoardSize, target=3,
+                        boardMap=initBoardMap)
+    # testPlayer.negativeMaxRecursive()
+    print(testPlayer.decide())
     print("pause")
