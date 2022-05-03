@@ -33,6 +33,8 @@ class Player:
         # after this step the patterns will be replaced by their StateMachines
         self.scoreModelsToStateMachines()
         self.offsetRange = [_ for _ in range(-self.target, self.target + 1)]
+        # self.offsetRange = [_ for _ in range(1 - self.target, self.target)]
+        # self.offsetRange = [-2, -1, 0, 1, 2]
         self.startTime = None  # time that starts one round of search
         self.searchCount = 0
         self.cutCount = 0
@@ -107,7 +109,7 @@ class Player:
         self.scoreModels[player].append([int(math.pow(config.scoreLevel, self.target - 1)),
                                          [0] + [selfNumber for _ in range(0, self.target - 1)] + [0], True])
         self.scoreModels[player].append(
-            [int(math.pow(config.scoreLevel, self.target)), [selfNumber for _ in range(0, self.target)], True])
+            [int(math.pow(config.scoreLevel, self.target + 1)), [selfNumber for _ in range(0, self.target)], True])
 
     def scoreModelsToStateMachines(self):
         for player in self.scoreModels:
@@ -254,7 +256,7 @@ class Player:
         if 0 not in thisBoardMap:
             return score
         if config.sorting:
-            possiblePositions = self.sortedPossiblePositions(boardMap=thisBoardMap, reverse=True)
+            possiblePositions = self.sortedPossiblePositions(boardMap=thisBoardMap, reverse=depth % 2 == 0)
         else:
             possiblePositions = self.getAllPossiblePositions(boardMap=thisBoardMap)
         # it would be better if the positions are sorted
@@ -389,20 +391,25 @@ if __name__ == '__main__':
     initBoardMap[6] = 2
     initBoardMap[7] = 2
     """
+    # initBoardMap = [0, 0, 0, 0, 0, 0,
+    #                 0, 0, 0, 0, 0, 0,
+    #                 0, 0, 0, 2, 0, 0,
+    #                 0, 1, 0, 2, 0, 0,
+    #                 0, 0, 0, 0, 0, 0,
+    #                 0, 0, 0, 0, 0, 0]
     # initBoardMap = [0, 0, 0, 0, 0,
     #                 0, 0, 0, 0, 0,
     #                 0, 0, 2, 2, 0,
     #                 0, 0, 0, 0, 0,
     #                 0, 0, 0, 0, 0]
-    initBoardMap = [0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0,
-                    0, 0, 2, 2, 0,
-                    0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0]
-    # initBoardMap = [0, 1, 0, 0,
-    #                 0, 2, 1, 0,
-    #                 0, 0, 2, 0,
-    #                 0, 0, 0, 0]
+    initBoardMap = [0, 1, 0, 0,
+                    0, 2, 1, 0,
+                    0, 0, 2, 0,
+                    0, 0, 0, 0]
+    # initBoardMap = [0, 0, 0, 0,
+    #                 0, 0, 0, 0,
+    #                 0, 0, 0, 0,
+    #                 0, 0, 0, 2]
     # initBoardMap = [1, 1, 2, 2,
     #                 1, 2, 2, 3,
     #                 0, 0, 1, 2,
@@ -422,7 +429,7 @@ if __name__ == '__main__':
     # initBoardMap = [1, 2, 1,
     #                 0, 1, 2,
     #                 2, 1, 0]
-    testPlayer = Player(color="black", boardSize=int(math.sqrt(len(initBoardMap))), target=4,
+    testPlayer = Player(color="black", boardSize=int(math.sqrt(len(initBoardMap))), target=3,
                         boardMap=initBoardMap)
     testPlayer.evaluate()
     print(testPlayer.decide())

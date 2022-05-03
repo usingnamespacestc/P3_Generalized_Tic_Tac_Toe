@@ -35,6 +35,20 @@ def gameStatus(boardSize=12, boardMap=None, target=6):
                             # someone wins
                             return "black" if color == 1 else "white"
             return "keep"
+    else:
+        if 0 not in boardMap:
+            return "draw"
+        for color in range(1, 3):
+            # color 1 black, 2 white
+            referee = StateMachine([color for _ in range(0, target)])
+            # 4 directions
+            allDirections = getAllDirections(boardSize=boardSize, boardMap=boardMap)
+            for oneDirection in allDirections:
+                for oneLine in oneDirection:
+                    if referee.perfectMatch(oneLine):
+                        # someone wins
+                        return "black" if color == 1 else "white"
+        return "keep"
 
 
 def singleStep(boardSize, boardMap, position: [int, int], color):
@@ -51,25 +65,28 @@ def deepCopyArray(target):
 
 def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
     status = ""
-    multiprocessing.set_start_method("spawn")
     print("Starting Game...")
-    print("Main process:", multiprocessing.current_process().name, multiprocessing.current_process().pid)
-    print("Main thread:", threading.current_thread().name, threading.current_thread().native_id)
-
-    # 0 in boardMap means none, 1 means black, 2 means white
-    boardMap = multiprocessing.Array("i", [0 for _ in range(0, boardSize * boardSize)])
-    if startState is not None:
-        for i in range(0, len(startState)):
-            boardMap[i] = startState[i]
 
     if guiOn:
+        multiprocessing.set_start_method("spawn")
+        print("Main process:", multiprocessing.current_process().name, multiprocessing.current_process().pid)
+        print("Main thread:", threading.current_thread().name, threading.current_thread().native_id)
+        # 0 in boardMap means none, 1 means black, 2 means white
+        boardMap = multiprocessing.Array("i", [0 for _ in range(0, boardSize * boardSize)])
         # initialize gui
         guiProcess = multiprocessing.Process(target=core.GUI.Board, args=(boardSize, boardMap))
         # guiProcess.daemon = True  # when the parent process is killed, kill it as well # doesn't work well
         guiProcess.start()
         time.sleep(0.1)  # without this sleep the gui doesn't start before the loop
         # print("pause")
-    # I am both black and white
+    else:
+        boardMap = [0 for _ in range(0, boardSize * boardSize)]
+
+    if startState is not None:
+        for i in range(0, len(startState)):
+            boardMap[i] = startState[i]
+
+    # AI both black and white
     if mode == "offline":
         print("playing at offline mode")
         playerBlack = Player(boardMap=boardMap, boardSize=boardSize, color="black", target=target)
@@ -147,4 +164,4 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
 
 
 if __name__ == '__main__':
-    main("offline", guiOn=True, boardSize=12, target=5)
+    main("offline", guiOn=False, boardSize=12, target=5)

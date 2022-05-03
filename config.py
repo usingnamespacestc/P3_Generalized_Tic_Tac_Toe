@@ -1,7 +1,7 @@
-timeLimit = 5  # seconds
+timeLimit = 15  # seconds
 depthLimit = 3
-aggressive = 1  # bigger more aggressive, default 1
-scoreLevel = 100
+aggressive = 0.99  # bigger more aggressive, default 1
+scoreLevel = 10
 debug = False
 pruning = True
 sorting = True
