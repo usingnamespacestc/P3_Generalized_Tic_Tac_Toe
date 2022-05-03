@@ -19,32 +19,36 @@ The layers 0, 2, 4, 6... are self score while layers 1, 3, 5, 7 are the score of
 Because the goal is only known when the game starts, we have to generate the score model dynamically. Here is a sample score model when 5 to win:
 ```
 # level  0
-# dead   1
-[1, [2, 1, 0], False],
+    # dead   1
+    [1, [2, 1, 0], False],
+    [1, [3, 1, 0], False],
 # level  1
-# living 1
-[10, [0, 1, 0], True],
-# dead   2
-[10, [2, 1, 1, 0], False],
+    # living 1
+    [10, [0, 1, 0], True],
+    # dead   2
+    [10, [2, 1, 1, 0], False],
+    [10, [3, 1, 1, 0], False],
 # level  2
-# living 2
-[100, [0, 1, 1, 0], True],
-[100, [0, 1, 0, 1, 0], True],  # abandoned
-# dead   3
-[100, [2, 1, 1, 1, 0], False],
+    # living 2
+    [100, [0, 1, 1, 0], True],
+    [100, [0, 1, 0, 1, 0], True],  # mark
+    # dead   3
+    [100, [2, 1, 1, 1, 0], False],
+    [100, [3, 1, 1, 1, 0], False],
 # level  3
-# living 3
-[1000, [0, 1, 1, 1, 0], True],
-[1000, [0, 1, 1, 0, 1, 0], False],  # abandoned
-# dead   4
-[1000, [2, 1, 1, 1, 1, 0], False],
-[1000, [2, 1, 1, 1, 0, 1], False],  # abandoned
+    # living 3
+    [1000, [0, 1, 1, 1, 0], True],
+    [1000, [0, 1, 1, 0, 1, 0], False],  # mark
+    # dead   4
+    [1000, [2, 1, 1, 1, 1, 0], False],
+    [1000, [3, 1, 1, 1, 1, 0], False],
+    [1000, [2, 1, 1, 1, 0, 1], False],  # mark
 # level  5
-# living 4
-[10000, [0, 1, 1, 1, 1, 0], True],
+    # living 4
+    [10000, [0, 1, 1, 1, 1, 0], True],
 # level6
-# any    5
-[100000, [1, 1, 1, 1, 1], True]
+    # any    5
+    [100000, [1, 1, 1, 1, 1], True]
 ```
 First col is the score, which is pow(10, level). The number of level is how many pieces are linked. The "living"(no enemy nearby) sequence has higher score than "dead" ones. The second col is the match pattern. If a col(or row or cross) has that shape inside, the player gains the score. The third col means is the pattern symmetry or not. If it is not symmetry then that pattern should be reversed and match again. 
 
