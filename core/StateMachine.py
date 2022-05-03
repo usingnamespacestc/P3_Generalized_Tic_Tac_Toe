@@ -8,6 +8,7 @@ description:
 """
 
 # 也就比字符串找子串方法快一丢丢。为了省一个join操作写了这么多代码实现了个状态机真是亏了。
+# Update: 草，用了字符串方法就没法解决边缘的问题了，GG
 # class StateMachine:
 #     class State:
 #         def __init__(self, condition=None):

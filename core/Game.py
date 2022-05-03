@@ -50,6 +50,7 @@ def deepCopyArray(target):
 
 
 def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
+    status = ""
     multiprocessing.set_start_method("spawn")
     print("Starting Game...")
     print("Main process:", multiprocessing.current_process().name, multiprocessing.current_process().pid)
@@ -66,6 +67,7 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
         guiProcess = multiprocessing.Process(target=core.GUI.Board, args=(boardSize, boardMap))
         # guiProcess.daemon = True  # when the parent process is killed, kill it as well # doesn't work well
         guiProcess.start()
+        time.sleep(0.1)  # without this sleep the gui doesn't start before the loop
         # print("pause")
     # I am both black and white
     if mode == "offline":
@@ -80,39 +82,69 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
             white decide
             check game over
         """
-        # TODO: used for adding breakpoints, remember to delete this
-        # print("pause")
         while True:
             # black turn
             startTime = time.time()
             position = playerBlack.decide()
             print(int(time.time() - startTime), "seconds used")
+            print("black", position)
+            print()
             singleStep(boardSize, boardMap, position, "black")
-            if gameStatus(boardSize, boardMap, target) != "keep":
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
                 break
 
             # white turn
             startTime = time.time()
             position = playerWhite.decide()
             print(int(time.time() - startTime), "seconds used")
+            print("white", position)
+            print()
             singleStep(boardSize, boardMap, position, "white")
-            if gameStatus(boardSize, boardMap, target) != "keep":
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
                 break
 
     # playing as black or white
-    elif mode == "online":
-        print("playing game at online mode")
+    elif mode == "debug":
+        print("playing game at debug mode")
+        playerBlack = Player(boardMap=boardMap, boardSize=boardSize, color="black", target=target)
+        print("pause")
         """
-        if I am black:
+        if AI is black:
             loop:
                 I decide
                 check game over
                 wait for opponent decide
                 check game over
         """
+        while True:
+            # AI black turn
+            startTime = time.time()
+            position = playerBlack.decide()
+            print(int(time.time() - startTime), "seconds used")
+            print("black", position)
+            print()
+            singleStep(boardSize, boardMap, position, "black")
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
 
-    return gameStatus(boardSize, boardMap, target)
+            # Player turn
+            print("player turn\n")
+            position = input()
+            position = position.split(" ")
+            position = [int(position[0]), int(position[1])]
+            singleStep(boardSize, boardMap, position, "white")
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
+    return status
 
 
 if __name__ == '__main__':
-    main("offline", guiOn=True, boardSize=3, target=3)
+    main("offline", guiOn=True, boardSize=12, target=5)

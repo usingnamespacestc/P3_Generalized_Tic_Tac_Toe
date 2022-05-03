@@ -1,3 +1,9 @@
-timeLimit = 1000  # seconds
-depthLimit = 1
-aggressive = 10  # bigger more aggressive, default 10
+timeLimit = 5  # seconds
+depthLimit = 3
+aggressive = 1  # bigger more aggressive, default 1
+scoreLevel = 100
+debug = False
+pruning = True
+sorting = True
+negativeMax = True
+miniMax = False
