@@ -164,4 +164,4 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
 
 
 if __name__ == '__main__':
-    main("offline", guiOn=False, boardSize=12, target=5)
+    main("offline", guiOn=True, boardSize=12, target=5)

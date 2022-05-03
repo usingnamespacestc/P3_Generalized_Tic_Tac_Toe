@@ -236,8 +236,8 @@ class Player:
             else:
                 print("after self")
             print("count:", self.searchCount, "score:", score)
-        # if depth % 2 == 0:
-        #     score *= -1
+        if depth % 2 == 0:
+            score *= -1
 
         # if depth > config.depthLimit or \
         #         score >= math.pow(10, self.target) * 0.9 or \
@@ -281,6 +281,7 @@ class Player:
                     break
         return alpha
 
+    # not used, using negativeMax instead
     def miniMax(self):
         def getMax(boardMap, depth, alpha=-float("inf"), beta=float("inf")):
             maxScore = None
