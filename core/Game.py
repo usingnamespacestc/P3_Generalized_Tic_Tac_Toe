@@ -4,11 +4,13 @@
 import multiprocessing
 import threading
 # import ctypes
+import config
 import core.GUI
 import time
 from core.Player import Player
 from core.StateMachine import StateMachine
 from core.Utils import getAllDirections
+from core.APIMaster import APIMaster
 
 
 def gameStatus(boardSize=12, boardMap=None, target=6):
@@ -160,8 +162,93 @@ def main(mode="offline", guiOn=True, boardSize=12, target=6, startState=None):
             if status != "keep":
                 print(status)
                 break
+    elif mode == "online":
+        color = config.color
+        # update boardMap from the server
+        game = APIMaster()
+        getBoardMap = game.getBoardMap()
+        for key in getBoardMap:
+            i, j = key.split(",")
+            j = int(j)
+            i = int(i)
+            boardMap[i * boardSize + j] = 1 if getBoardMap[key] == "O" else 2
+        player = Player(boardMap=boardMap, boardSize=boardSize, color=color, target=target)
+        while True:
+            getBoardMap = game.getBoardMap()
+            notMyTurn = ((len(getBoardMap) % 2 == 0) ^ (color == "black"))
+            while notMyTurn:
+                time.sleep(5)
+                getBoardMap = game.getBoardMap()
+                notMyTurn = ((len(getBoardMap) % 2 == 0) ^ (color == "black"))
+                print(notMyTurn)
+            # update boardMap from the server
+            for key in getBoardMap:
+                i, j = key.split(",")
+                j = int(j)
+                i = int(i)
+                boardMap[i * boardSize + j] = 1 if getBoardMap[key] == "O" else 2
+
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
+            # AI turn
+            startTime = time.time()
+            position = player.decide()
+            print(int(time.time() - startTime), "seconds used")
+            print(color, position)
+            print()
+            singleStep(boardSize, boardMap, position, color)
+            game.makeMove(config.team_id, [position[1], position[0]], config.currentGame)
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
+    elif mode == "online_debug":
+        # update boardMap from the server
+        game = APIMaster()
+        getBoardMap = game.getBoardMap()
+        for key in getBoardMap:
+            i, j = key.split(",")
+            j = int(j)
+            i = int(i)
+            boardMap[i * boardSize + j] = 1 if getBoardMap[key] == "O" else 2
+        playerBlack = Player(boardMap=boardMap, boardSize=boardSize, color="black", target=target)
+        playerWhite = Player(boardMap=boardMap, boardSize=boardSize, color="white", target=target)
+        while True:
+            # black turn
+            startTime = time.time()
+            position = playerBlack.decide()
+            print(int(time.time() - startTime), "seconds used")
+            print("black", position)
+            print()
+            singleStep(boardSize, boardMap, position, "black")
+            game.makeMove(config.team_id, [position[1], position[0]], config.currentGame)
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
+
+            # white turn
+            startTime = time.time()
+            position = playerWhite.decide()
+            print(int(time.time() - startTime), "seconds used")
+            print("white", position)
+            print()
+            singleStep(boardSize, boardMap, position, "white")
+            game.makeMove(config.other_team_id, [position[1], position[0]], config.currentGame)
+            status = gameStatus(boardSize, boardMap, target)
+            if status != "keep":
+                print(status)
+                break
+        pass
+    else:
+        print("unknown mode:", mode)
     return status
 
 
 if __name__ == '__main__':
-    main("offline", guiOn=True, boardSize=12, target=5)
+    # main("online", guiOn=True, boardSize=config.boardSize, target=config.target)
+    # main("offline", guiOn=True, boardSize=config.boardSize, target=config.target)
+    # main("debug", guiOn=True, boardSize=config.boardSize, target=config.target)
+    main("online_debug", guiOn=True, boardSize=config.boardSize, target=config.target)

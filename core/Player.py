@@ -430,7 +430,7 @@ if __name__ == '__main__':
     # initBoardMap = [1, 2, 1,
     #                 0, 1, 2,
     #                 2, 1, 0]
-    testPlayer = Player(color="black", boardSize=int(math.sqrt(len(initBoardMap))), target=3,
+    testPlayer = Player(color="white", boardSize=int(math.sqrt(len(initBoardMap))), target=3,
                         boardMap=initBoardMap)
     testPlayer.evaluate()
     print(testPlayer.decide())

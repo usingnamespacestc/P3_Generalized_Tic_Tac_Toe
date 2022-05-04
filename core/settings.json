@@ -18,7 +18,8 @@
   ],
   "origin": "https://www.notexponential.com/",
   "uri": "aip2pgaming/api/index.php",
-  "currentGame": 3306,
+  "currentGame": 3688,
   "boardSize": 12,
-  "target": 6
+  "target": 6,
+  "comment": "this settings.json is abandoned"
 }
